@@ -19,8 +19,7 @@ func main() {
 func CutVideo(sorucePath string, destPath string, startTime string, endTime string) {
 
 	writer := &logWriter{
-		buffer:    &bytes.Buffer{},
-		lastLines: make([][]byte, 0),
+		buffer: &bytes.Buffer{},
 	}
 	file, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
@@ -31,15 +30,11 @@ func CutVideo(sorucePath string, destPath string, startTime string, endTime stri
 
 	ffmpeg.Input(sorucePath, ffmpeg.KwArgs{"ss": startTime, "to": endTime, "async": "1", "strict": "-2"}).Output(destPath).OverWriteOutput().WithErrorOutput(io.MultiWriter(writer)).Run()
 
-	for _, line := range writer.LastLines() {
-		file.Write(line)
-	}
 }
 
 func StartStream(source string, dest string, segmentTime string) {
 	writer := &logWriter{
-		buffer:    bytes.NewBuffer(make([]byte, 1024)),
-		lastLines: make([][]byte, 0),
+		buffer: bytes.NewBuffer(make([]byte, 1024)),
 	}
 	file, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
