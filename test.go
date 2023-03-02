@@ -29,7 +29,7 @@ func CutVideo(sorucePath string, destPath string, startTime string, endTime stri
 	}
 	defer file.Close()
 
-	ffmpeg.Input(sorucePath, ffmpeg.KwArgs{"ss": startTime, "to": endTime, "async": "1", "strifdfct": "-2"}).Output(destPath).OverWriteOutput().WithErrorOutput(io.MultiWriter(writer)).Run()
+	ffmpeg.Input(sorucePath, ffmpeg.KwArgs{"ss": startTime, "to": endTime, "async": "1", "strict": "-2"}).Output(destPath).OverWriteOutput().WithErrorOutput(io.MultiWriter(writer)).Run()
 
 	for _, line := range writer.LastLines() {
 		file.Write(line)
@@ -48,16 +48,14 @@ func StartStream(source string, dest string, segmentTime string) {
 	}
 	defer file.Close()
 	ffmpeg.Input(source).Output(dest, ffmpeg.KwArgs{"b:v": "1M", "f": "segment", "segment_time": segmentTime, "reset_timestamps": "1", "strftime": "1"}).WithErrorOutput(io.MultiWriter(writer)).Run()
-	for _, line := range writer.LastLines() {
-		file.Write(line)
-	}
+
 }
 
 var ErrorWords = []string{"error", "Error", "ERROR", "failed", "Failed", "FAILED", "fatal", "Fatal", "FATAL", "unable", "Unable", "UNABLE", "invalid", "Invalid", "INVALID", "not", "Not", "NOT", "cannot", "Cannot", "CANNOT", "could not", "Could not", "COULD NOT", "no such", "No such", "NO SUCH", "no input", "No input", "NO INPUT", "no output", "No output", "NO OUTPUT", "no stream", "No stream", "NO STREAM", "no file", "No file", "NO FILE", "no such file", "No such file", "NO SUCH FILE", "no such stream", "No such stream", "NO SUCH STREAM", "no such device", "No such device", "NO SUCH DEVICE", "no such filter", "No such filter", "NO SUCH FILTER", "no such option", "No such option", "NO SUCH OPTION", "no such channel", "No such channel", "NO SUCH CHANNEL", "no such field", "No such field", "NO SUCH FIELD", "no such property", "No such property", "NO SUCH PROPERTY", "no such method", "No such method", "NO SUCH METHOD", "no such class", "No such class", "NO SUCH CLASS", "no such function", "No such function", "NO SUCH FUNCTION", "no such frame", "No such frame", "NO SUCH FRAME", "no such sample", "No such sample", "NO SUCH SAMPLE", "no such device"}
 
 type logWriter struct {
-	buffer    *bytes.Buffer
-	lastLines [][]byte
+	buffer *bytes.Buffer
+	Writer *io.Writer
 }
 
 func (w *logWriter) Write(p []byte) (int, error) {
@@ -70,23 +68,8 @@ func (w *logWriter) Write(p []byte) (int, error) {
 	}
 	for _, key := range ErrorWords {
 		if strings.Contains(string(p), key) {
-			fmt.Println(string(p))
 			break
 		}
 	}
-
-	// Split the buffer into lines
-	lines := bytes.Split(w.buffer.Bytes(), []byte("\n"))
-	// Keep only the last 3 lines
-	if len(lines) > 4 {
-		w.lastLines = lines[len(lines)-4:]
-	} else {
-		w.lastLines = lines
-	}
-
 	return n, nil
-}
-
-func (w *logWriter) LastLines() [][]byte {
-	return w.lastLines
 }
